@@ -175,7 +175,7 @@ def test_non_stocked_product_set_quantity_non_zero_raises():
         product.quantity = 1
 
 
-def test_non_stocked_product_show_contains_non_stocked(capsys):
+def test_non_stocked_product_show_contains_non_stocked():
     """Test that show() indicates non-stocked."""
     product = NonStockedProduct("Windows License", price=125)
     out = str(product)
@@ -217,7 +217,7 @@ def test_limited_product_buy_above_maximum_raises():
         product.buy(2)
 
 
-def test_limited_product_show_contains_maximum(capsys):
+def test_limited_product_show_contains_maximum():
     """Test that show() includes maximum per order."""
     product = LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
     out = str(product)
@@ -254,7 +254,7 @@ def test_product_set_promotion_get_promotion():
     assert product.promotion is None, "Setting None should remove promotion"
 
 
-def test_product_show_with_promotion(capsys):
+def test_product_show_with_promotion():
     """show() displays promotion name when set."""
     product = Product("MacBook", price=100, quantity=50)
     product.promotion = SecondHalfPrice("Second Half price!")

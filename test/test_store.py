@@ -16,7 +16,7 @@ class TestStore(unittest.TestCase):
         self.assertEqual(p.quantity, 5)
 
     def test_product_runs_out_of_stock_after_order(self):
-        """When an order exhausts stock, product becomes inactive and is excluded from get_all_products."""
+        """Order exhausts stock; product inactive and excluded from all_products."""
         p = products.Product("Item", price=10, quantity=3)
         s = Store([p])
         self.assertEqual(s.total_quantity, 3)

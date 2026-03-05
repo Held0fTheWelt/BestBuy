@@ -19,10 +19,10 @@ class Promotion(ABC):
     def apply_promotion(self, product, quantity: int) -> float:
         """
         Return the discounted total price for the given product and quantity.
-        product: a Product instance (or subclass); use product._price for unit price.
+        product: a Product instance (or subclass); use product.price for unit price.
         quantity: number of units.
         """
-        pass
+        raise NotImplementedError("Subclasses must implement apply_promotion")
 
 
 class PercentDiscount(Promotion):
@@ -37,7 +37,7 @@ class PercentDiscount(Promotion):
 
     def apply_promotion(self, product, quantity: int) -> float:
         """Return price after percentage discount."""
-        total = product._price * quantity
+        total = product.price * quantity
         return total * (1 - self._percent / 100)
 
 
@@ -46,7 +46,7 @@ class SecondHalfPrice(Promotion):
 
     def apply_promotion(self, product, quantity: int) -> float:
         """For every two items, first full price, second half price."""
-        price = product._price
+        price = product.price
         pairs = quantity // 2
         remainder = quantity % 2
         return pairs * (price + price * 0.5) + remainder * price
@@ -57,7 +57,7 @@ class ThirdOneFree(Promotion):
 
     def apply_promotion(self, product, quantity: int) -> float:
         """For every three items, pay for two."""
-        price = product._price
+        price = product.price
         triplets = quantity // 3
         remainder = quantity % 3
         return triplets * (2 * price) + remainder * price
