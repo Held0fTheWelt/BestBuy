@@ -18,6 +18,15 @@ class Product:
         self._price = price
         self._quantity = quantity
         self._active = True
+        self._promotion = None
+
+    def get_promotion(self):
+        """Return the current promotion, or None."""
+        return self._promotion
+
+    def set_promotion(self, promotion) -> None:
+        """Set the promotion for this product. Pass None to remove."""
+        self._promotion = promotion
 
     def get_quantity(self) -> int:
         """Return the current quantity in stock."""
@@ -45,7 +54,10 @@ class Product:
 
     def show(self) -> None:
         """Print a string representation of the product."""
-        print(f"{self._name}, Price: {self._price}, Quantity: {self._quantity}")
+        line = f"{self._name}, Price: {self._price}, Quantity: {self._quantity}"
+        if self._promotion is not None:
+            line += f", Promotion: {self._promotion.name}"
+        print(line)
 
     def buy(self, quantity: int) -> float:
         """Buy the given quantity. Returns total price. Raises PurchaseError if invalid."""
@@ -59,6 +71,8 @@ class Product:
         self._quantity -= quantity
         if self._quantity == 0:
             self.deactivate()
+        if self._promotion is not None:
+            return self._promotion.apply_promotion(self, quantity)
         return self._price * quantity
 
 
@@ -80,11 +94,16 @@ class NonStockedProduct(Product):
             raise PurchaseError("Cannot buy an inactive product")
         if quantity <= 0:
             raise PurchaseError("Quantity to buy must be positive")
+        if self._promotion is not None:
+            return self._promotion.apply_promotion(self, quantity)
         return self._price * quantity
 
     def show(self) -> None:
         """Print a string representation; indicates non-stocked."""
-        print(f"{self._name}, Price: {self._price}, Quantity: 0 (Non-stocked)")
+        line = f"{self._name}, Price: {self._price}, Quantity: 0 (Non-stocked)"
+        if self._promotion is not None:
+            line += f", Promotion: {self._promotion.name}"
+        print(line)
 
 
 class LimitedProduct(Product):
@@ -107,10 +126,13 @@ class LimitedProduct(Product):
 
     def show(self) -> None:
         """Print a string representation; indicates maximum per order."""
-        print(
+        line = (
             f"{self._name}, Price: {self._price}, Quantity: {self._quantity}, "
             f"Maximum per order: {self._maximum}"
         )
+        if self._promotion is not None:
+            line += f", Promotion: {self._promotion.name}"
+        print(line)
 
 
 def main():
