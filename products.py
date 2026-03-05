@@ -62,6 +62,57 @@ class Product:
         return self._price * quantity
 
 
+class NonStockedProduct(Product):
+    """Product with no physical stock; quantity is always 0."""
+
+    def __init__(self, name: str, price: float):
+        """Create a non-stocked product. Quantity is always 0."""
+        super().__init__(name, price, 0)
+
+    def set_quantity(self, quantity: int) -> None:
+        """Non-stocked products ignore quantity updates; quantity stays 0."""
+        if quantity != 0:
+            raise ValueError("Non-stocked product quantity must remain 0")
+
+    def buy(self, quantity: int) -> float:
+        """Buy the given quantity. Does not reduce stock (always 0)."""
+        if not self._active:
+            raise PurchaseError("Cannot buy an inactive product")
+        if quantity <= 0:
+            raise PurchaseError("Quantity to buy must be positive")
+        return self._price * quantity
+
+    def show(self) -> None:
+        """Print a string representation; indicates non-stocked."""
+        print(f"{self._name}, Price: {self._price}, Quantity: 0 (Non-stocked)")
+
+
+class LimitedProduct(Product):
+    """Product that can only be purchased up to a maximum quantity per order."""
+
+    def __init__(self, name: str, price: float, quantity: int, maximum: int):
+        """Create a limited product. maximum is the max quantity per order."""
+        super().__init__(name, price, quantity)
+        if maximum <= 0:
+            raise ValueError("Maximum must be positive")
+        self._maximum = maximum
+
+    def buy(self, quantity: int) -> float:
+        """Buy the given quantity. Raises if quantity exceeds maximum per order."""
+        if quantity > self._maximum:
+            raise PurchaseError(
+                f"Quantity {quantity} exceeds maximum per order ({self._maximum})"
+            )
+        return super().buy(quantity)
+
+    def show(self) -> None:
+        """Print a string representation; indicates maximum per order."""
+        print(
+            f"{self._name}, Price: {self._price}, Quantity: {self._quantity}, "
+            f"Maximum per order: {self._maximum}"
+        )
+
+
 def main():
     """Demo: create products, buy, show, set quantity."""
     bose = Product("Bose QuietComfort Earbuds", price=250, quantity=500)
