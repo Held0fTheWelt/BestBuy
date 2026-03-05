@@ -31,6 +31,8 @@ class Store:
         """Process order (list of (product, quantity)) and return total price."""
         total = 0.0
         for product, quantity in shopping_list:
+            if product not in self._products:
+                raise ValueError("Product not in store")
             total += product.buy(quantity)
         return total
 
