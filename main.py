@@ -1,4 +1,4 @@
-import products
+4import products
 import store
 
 # setup initial stock of inventory
@@ -11,7 +11,7 @@ best_buy = store.Store(product_list)
 
 
 def menu():
-    """Zeigt das Menü an und liefert die Benutzerauswahl."""
+    """Display the menu and return the user's choice."""
     print("\n1. List all products in store")
     print("2. Show total amount in store")
     print("3. Make an order")
@@ -19,8 +19,43 @@ def menu():
     return input("Please choose a number: ").strip()
 
 
+def _do_make_order(store_obj):
+    """Collect order lines and place order; print total or error."""
+    products_available = store_obj.get_all_products()
+    if not products_available:
+        print("No products available.")
+        return
+    for i, product in enumerate(products_available):
+        print(f"{i}. ", end="")
+        product.show()
+    shopping_list = []
+    while True:
+        try:
+            idx = input("Enter product number (or empty to finish): ").strip()
+            if idx == "":
+                break
+            idx = int(idx)
+            if idx < 0 or idx >= len(products_available):
+                print("Invalid product number.")
+                continue
+            qty = input("Enter quantity: ").strip()
+            qty = int(qty)
+            if qty <= 0:
+                print("Quantity must be positive.")
+                continue
+            shopping_list.append((products_available[idx], qty))
+        except ValueError:
+            print("Invalid input.")
+    if shopping_list:
+        try:
+            total = store_obj.order(shopping_list)
+            print(f"Order total: {total}")
+        except products.PurchaseError as err:
+            print(f"Order failed: {err}")
+
+
 def execute(store_obj, choice):
-    """Führt die gewählte Aktion aus. Gibt False zurück bei Quit, sonst True."""
+    """Execute the chosen action. Returns False on Quit, True otherwise."""
     if choice == "1":
         for product in store_obj.get_all_products():
             product.show()
@@ -29,37 +64,7 @@ def execute(store_obj, choice):
         print(store_obj.get_total_quantity())
         return True
     if choice == "3":
-        products_available = store_obj.get_all_products()
-        if not products_available:
-            print("No products available.")
-            return True
-        for i, product in enumerate(products_available):
-            print(f"{i}. ", end="")
-            product.show()
-        shopping_list = []
-        while True:
-            try:
-                idx = input("Enter product number (or empty to finish): ").strip()
-                if idx == "":
-                    break
-                idx = int(idx)
-                if idx < 0 or idx >= len(products_available):
-                    print("Invalid product number.")
-                    continue
-                qty = input("Enter quantity: ").strip()
-                qty = int(qty)
-                if qty <= 0:
-                    print("Quantity must be positive.")
-                    continue
-                shopping_list.append((products_available[idx], qty))
-            except ValueError:
-                print("Invalid input.")
-        if shopping_list:
-            try:
-                total = store_obj.order(shopping_list)
-                print(f"Order total: {total}")
-            except Exception as e:
-                print(f"Order failed: {e}")
+        _do_make_order(store_obj)
         return True
     if choice == "4":
         print("Bye!")
@@ -69,7 +74,7 @@ def execute(store_obj, choice):
 
 
 def start(store_obj):
-    """Hauptschleife: Menü anzeigen und Aktion ausführen, bis Quit."""
+    """Main loop: show menu and execute action until Quit."""
     while True:
         choice = menu()
         if not execute(store_obj, choice):
