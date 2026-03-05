@@ -17,9 +17,9 @@ third_one_free = promotions.ThirdOneFree("Third One Free!")
 thirty_percent = promotions.PercentDiscount("30% off!", percent=30)
 
 # Add promotions to products
-product_list[0].set_promotion(second_half_price)
-product_list[1].set_promotion(third_one_free)
-product_list[3].set_promotion(thirty_percent)
+product_list[0].promotion = second_half_price
+product_list[1].promotion = third_one_free
+product_list[3].promotion = thirty_percent
 
 best_buy = store.Store(product_list)
 
@@ -35,13 +35,12 @@ def menu():
 
 def _do_make_order(store_obj):
     """Collect order lines and place order; print total or error."""
-    products_available = store_obj.get_all_products()
+    products_available = store_obj.all_products
     if not products_available:
         print("No products available.")
         return
     for i, product in enumerate(products_available):
-        print(f"{i}. ", end="")
-        product.show()
+        print(f"{i}. {product}")
     shopping_list = []
     while True:
         try:
@@ -71,11 +70,11 @@ def _do_make_order(store_obj):
 def execute(store_obj, choice):
     """Execute the chosen action. Returns False on Quit, True otherwise."""
     if choice == "1":
-        for product in store_obj.get_all_products():
-            product.show()
+        for product in store_obj.all_products:
+            print(product)
         return True
     if choice == "2":
-        print(store_obj.get_total_quantity())
+        print(store_obj.total_quantity)
         return True
     if choice == "3":
         _do_make_order(store_obj)

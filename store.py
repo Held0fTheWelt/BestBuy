@@ -19,13 +19,26 @@ class Store:
         """Remove a product from the store."""
         self._products.remove(product)
 
-    def get_total_quantity(self) -> int:
-        """Return the total number of items in the store."""
-        return sum(p.get_quantity() for p in self._products)
+    @property
+    def total_quantity(self) -> int:
+        """Total number of items in the store."""
+        return sum(p.quantity for p in self._products)
 
-    def get_all_products(self) -> List[Product]:
-        """Return all active products."""
-        return [p for p in self._products if p.is_active()]
+    @property
+    def all_products(self) -> List[Product]:
+        """All active products."""
+        return [p for p in self._products if p.is_active]
+
+    def __contains__(self, product: Product) -> bool:
+        """Support 'product in store'."""
+        return product in self._products
+
+    def __add__(self, other: "Store") -> "Store":
+        """Combine two stores; returns a new Store with products from both."""
+        if not isinstance(other, Store):
+            return NotImplemented
+        combined = list(self._products) + list(other._products)
+        return Store(combined)
 
     def order(self, shopping_list: List[tuple]) -> float:
         """Process order (list of (product, quantity)) and return total price."""
@@ -46,8 +59,8 @@ def main():
     ]
 
     best_buy = Store(product_list)
-    products_list = best_buy.get_all_products()
-    print(best_buy.get_total_quantity())
+    products_list = best_buy.all_products
+    print(best_buy.total_quantity)
     print(best_buy.order([(products_list[0], 1), (products_list[1], 2)]))
 
 
