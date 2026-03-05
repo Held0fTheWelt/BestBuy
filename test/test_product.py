@@ -3,6 +3,7 @@
 import pytest
 
 from products import Product, PurchaseError, NonStockedProduct, LimitedProduct
+from promotions import PercentDiscount, SecondHalfPrice, ThirdOneFree
 
 
 def test_create_normal_product_works():
@@ -235,3 +236,68 @@ def test_limited_product_invalid_maximum_raises():
         LimitedProduct("Shipping", price=10, quantity=250, maximum=0)
     with pytest.raises(ValueError, match="Maximum must be positive"):
         LimitedProduct("Shipping", price=10, quantity=250, maximum=-1)
+
+
+# --- Product with Promotion ---
+
+
+def test_product_get_promotion_default_none():
+    """Product has no promotion by default."""
+    product = Product("MacBook", price=100, quantity=50)
+    assert product.get_promotion() is None, "New product should have no promotion"
+
+
+def test_product_set_promotion_get_promotion():
+    """set_promotion and get_promotion round-trip."""
+    product = Product("MacBook", price=100, quantity=50)
+    prom = PercentDiscount("20% off", percent=20)
+    product.set_promotion(prom)
+    assert product.get_promotion() is prom, "get_promotion should return set promotion"
+    product.set_promotion(None)
+    assert product.get_promotion() is None, "Setting None should remove promotion"
+
+
+def test_product_show_with_promotion(capsys):
+    """show() displays promotion name when set."""
+    product = Product("MacBook", price=100, quantity=50)
+    product.set_promotion(SecondHalfPrice("Second Half price!"))
+    product.show()
+    out = capsys.readouterr().out
+    assert "Promotion" in out, "Output should mention promotion"
+    assert "Second Half price!" in out, "Promotion name should appear"
+
+
+def test_product_buy_with_percent_discount():
+    """buy() uses promotion price when promotion is set."""
+    product = Product("MacBook", price=100, quantity=100)
+    product.set_promotion(PercentDiscount("30% off", percent=30))
+    total = product.buy(10)
+    assert total == 700.0, "10 * 100 * 0.7 = 700"
+    assert product.get_quantity() == 90, "Quantity should decrease by 10"
+
+
+def test_product_buy_with_second_half_price():
+    """buy() with SecondHalfPrice returns discounted total."""
+    product = Product("MacBook", price=100, quantity=100)
+    product.set_promotion(SecondHalfPrice("Second Half price!"))
+    total = product.buy(2)
+    assert total == 150.0, "2 items: 100 + 50 = 150"
+    assert product.get_quantity() == 98, "Quantity should decrease by 2"
+
+
+def test_product_buy_with_third_one_free():
+    """buy() with ThirdOneFree returns discounted total."""
+    product = Product("MacBook", price=100, quantity=100)
+    product.set_promotion(ThirdOneFree("Third One Free!"))
+    total = product.buy(3)
+    assert total == 200.0, "3 items: pay for 2 = 200"
+    assert product.get_quantity() == 97, "Quantity should decrease by 3"
+
+
+def test_non_stocked_product_buy_with_promotion():
+    """NonStockedProduct buy() applies promotion; quantity stays 0."""
+    product = NonStockedProduct("Windows License", price=100)
+    product.set_promotion(PercentDiscount("50% off", percent=50))
+    total = product.buy(2)
+    assert total == 100.0, "2 * 100 * 0.5 = 100"
+    assert product.get_quantity() == 0, "Quantity should remain 0"
