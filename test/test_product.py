@@ -2,7 +2,7 @@
 
 import pytest
 
-from products import Product, PurchaseError
+from products import Product, PurchaseError, NonStockedProduct, LimitedProduct
 
 
 def test_create_normal_product_works():
@@ -141,3 +141,97 @@ def test_reactivate_then_restock_allows_buy():
     total = product.buy(3)
     assert total == 30.0, "Order total should be 30.0"
     assert product.get_quantity() == 2, "Remaining quantity should be 2"
+
+
+# --- NonStockedProduct ---
+
+
+def test_non_stocked_product_creation():
+    """Test that creating a non-stocked product works; quantity is always 0."""
+    product = NonStockedProduct("Windows License", price=125)
+    assert product.get_quantity() == 0, "Non-stocked product quantity should be 0"
+    assert product.is_active() is True, "Non-stocked product should be active"
+
+
+def test_non_stocked_product_buy_returns_total_quantity_unchanged():
+    """Test that buy() returns correct total and quantity stays 0."""
+    product = NonStockedProduct("Windows License", price=125)
+    total = product.buy(3)
+    assert total == 375.0, "Total should be 125 * 3 = 375.0"
+    assert product.get_quantity() == 0, "Quantity should still be 0 after buy"
+
+
+def test_non_stocked_product_set_quantity_zero_allowed():
+    """Test that set_quantity(0) is allowed (no-op)."""
+    product = NonStockedProduct("Windows License", price=125)
+    product.set_quantity(0)
+    assert product.get_quantity() == 0, "Quantity should remain 0"
+
+
+def test_non_stocked_product_set_quantity_non_zero_raises():
+    """Test that set_quantity(non-zero) raises ValueError."""
+    product = NonStockedProduct("Windows License", price=125)
+    with pytest.raises(ValueError, match="Non-stocked product quantity must remain 0"):
+        product.set_quantity(1)
+
+
+def test_non_stocked_product_show_contains_non_stocked(capsys):
+    """Test that show() indicates non-stocked."""
+    product = NonStockedProduct("Windows License", price=125)
+    product.show()
+    out = capsys.readouterr().out
+    assert "Windows License" in out, "Name should appear"
+    assert "125" in out, "Price should appear"
+    assert "Non-stocked" in out, "Should indicate non-stocked"
+
+
+def test_non_stocked_product_buy_from_inactive_raises():
+    """Test that buying from inactive non-stocked product raises."""
+    product = NonStockedProduct("Windows License", price=125)
+    product.deactivate()
+    with pytest.raises(PurchaseError, match="Cannot buy an inactive product"):
+        product.buy(1)
+
+
+# --- LimitedProduct ---
+
+
+def test_limited_product_creation():
+    """Test that creating a limited product works."""
+    product = LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
+    assert product.get_quantity() == 250, "Quantity should be 250"
+    assert product.is_active() is True, "Limited product should be active"
+
+
+def test_limited_product_buy_within_maximum_works():
+    """Test that buy(quantity <= maximum) works and reduces stock."""
+    product = LimitedProduct("Shipping", price=10, quantity=250, maximum=2)
+    total = product.buy(2)
+    assert total == 20.0, "Total should be 10 * 2 = 20.0"
+    assert product.get_quantity() == 248, "Quantity should decrease by 2"
+
+
+def test_limited_product_buy_above_maximum_raises():
+    """Test that buy(quantity > maximum) raises PurchaseError."""
+    product = LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
+    with pytest.raises(PurchaseError, match="exceeds maximum per order"):
+        product.buy(2)
+
+
+def test_limited_product_show_contains_maximum(capsys):
+    """Test that show() includes maximum per order."""
+    product = LimitedProduct("Shipping", price=10, quantity=250, maximum=1)
+    product.show()
+    out = capsys.readouterr().out
+    assert "Shipping" in out, "Name should appear"
+    assert "10" in out, "Price should appear"
+    assert "250" in out, "Quantity should appear"
+    assert "Maximum per order" in out or "1" in out, "Maximum should appear"
+
+
+def test_limited_product_invalid_maximum_raises():
+    """Test that maximum <= 0 raises ValueError."""
+    with pytest.raises(ValueError, match="Maximum must be positive"):
+        LimitedProduct("Shipping", price=10, quantity=250, maximum=0)
+    with pytest.raises(ValueError, match="Maximum must be positive"):
+        LimitedProduct("Shipping", price=10, quantity=250, maximum=-1)
